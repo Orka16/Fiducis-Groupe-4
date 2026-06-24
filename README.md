@@ -888,7 +888,7 @@ Règle d'or appliquée dans le pare-feu (docs/04 §4.4) : la **DMZ ne peut pas i
 ```mermaid
 flowchart LR
     INET["Internet"] -->|"80/443"| WEB["SRV-WEB (DMZ)<br/>172.16.10.10"]
-    WEB -.->|"❌ interdit"| LAN["LAN production<br/>10.10.0.0/24"]
+    WEB -.->|" interdit"| LAN["LAN production<br/>10.10.0.0/24"]
     LAN -->|"API contrôlée"| WEB
 ```
 
@@ -1159,10 +1159,10 @@ Modèle de GPO documenté dans `configs/ad/audit-fichiers.gpo.md`.
 
 | Groupe AD | Compta clients | Dossiers juridiques | Paie/RH | Espace client Nextcloud |
 |---|:---:|:---:|:---:|:---:|
-| Comptables | ✅ | — | — | ✅ (clients affectés) |
-| Juristes | — | ✅ | — | ✅ (clients affectés) |
-| RH | — | — | ✅ | — |
-| Direction | ✅ | ✅ | ✅ | ✅ |
+| Comptables | OK | — | — | OK (clients affectés) |
+| Juristes | — | OK | — | OK (clients affectés) |
+| RH | — | — | OK | — |
+| Direction | OK | OK | OK | OK |
 | Administrateurs SI | logs only | logs only | logs only | admin |
 
 ## 9.8 Réponse-type à un contrôle CNIL
