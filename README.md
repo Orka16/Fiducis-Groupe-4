@@ -216,12 +216,11 @@ La traçabilité des accès aux fichiers clients s'appuie sur l'audit d'accès a
 
 ## Contenu du dépôt
 
-- `configs/openvpn/` : serveurs et clients (site-à-site Bordeaux/La Rochelle/Bayonne + télétravail), CCD, pare-feu nftables
-- `configs/web/` : configuration Nginx du site
-- `configs/ad/` : GPO d'audit des accès fichiers (CNIL) et configuration NTP du DC
+- `configs/vpn/` : serveurs et clients (site-à-site Bordeaux/La Rochelle/Bayonne + télétravail), CCD, pare-feu nftables
+- `configs/Nginx/` : configuration Nginx du site
+- `configs/AD/` : GPO d'audit des accès fichiers (CNIL) et configuration NTP du DC
 - `configs/monitoring/` : stack Docker Prometheus + Grafana + node-exporter (vos fichiers réels) et extension alertes mail
-- `terraform/` : provisionnement Azure Blob Storage pour la sauvegarde du System State AD (code réel, validé en local, non encore appliqué sur Azure) + `backup-ad.ps1`
-- `web/site/` : le site FIDUCIS (un seul fichier HTML autonome)
-- `scripts/` : provisioning VirtualBox, génération de la PKI, profils .ovpn
+- `Sauvegarde azure/` : provisionnement Azure Blob Storage pour la sauvegarde du System State AD (code réel, validé en local, non encore appliqué sur Azure) + 
+- `configs/Nginx/` : le site FIDUCIS (un seul fichier HTML autonome)
 
 Les certificats, clés, secrets et états Terraform (`*.tfstate`, `terraform.tfvars`) ne sont pas versionnés (voir `.gitignore`). Le fichier de verrouillage `.terraform.lock.hcl` est conservé pour figer les versions de providers.
