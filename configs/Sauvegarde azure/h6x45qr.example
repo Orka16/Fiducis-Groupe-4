@@ -1,0 +1,10 @@
+# Copie ce fichier en "terraform.tfvars" et complète la valeur.
+# Récupère l'ID avec :  az account show --query id -o tsv
+
+subscription_id = "7b38b77c-5283-442a-a5db-8e20cc6da51c"
+
+# Optionnel : décommente pour personnaliser
+# location            = "francecentral"
+# replication_type    = "GRS"   # géo-redondant (Bordeaux <-> autre région)
+# resource_group_name = "rg-ad-backup-bdx"
+# container_name      = "ad-systemstate"

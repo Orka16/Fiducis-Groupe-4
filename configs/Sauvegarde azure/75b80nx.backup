@@ -1,0 +1,82 @@
+{
+  "version": 4,
+  "terraform_version": "1.15.6",
+  "serial": 6,
+  "lineage": "c34dc6cf-7ae7-92dd-b6fd-1351bee77b33",
+  "outputs": {
+    "container_name": {
+      "value": "ad-systemstate",
+      "type": "string"
+    },
+    "resource_group_name": {
+      "value": "rg-ad-backup-bdx",
+      "type": "string"
+    },
+    "storage_account_name": {
+      "value": "stadbkpbdxc8bfz0",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "azurerm_resource_group",
+      "name": "backup",
+      "provider": "provider[\"registry.terraform.io/hashicorp/azurerm\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "/subscriptions/7b38b77c-5283-442a-a5db-8e20cc6da51c/resourceGroups/rg-ad-backup-bdx",
+            "location": "francecentral",
+            "managed_by": "",
+            "name": "rg-ad-backup-bdx",
+            "tags": {
+              "environnement": "prod",
+              "projet": "sauvegarde-ad",
+              "site": "bordeaux"
+            },
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "name": "rg-ad-backup-bdx",
+            "subscription_id": "7b38b77c-5283-442a-a5db-8e20cc6da51c"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo1NDAwMDAwMDAwMDAwLCJkZWxldGUiOjU0MDAwMDAwMDAwMDAsInJlYWQiOjMwMDAwMDAwMDAwMCwidXBkYXRlIjo1NDAwMDAwMDAwMDAwfX0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "random_string",
+      "name": "suffix",
+      "provider": "provider[\"registry.terraform.io/hashicorp/random\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "id": "c8bfz0",
+            "keepers": null,
+            "length": 6,
+            "lower": true,
+            "min_lower": 0,
+            "min_numeric": 0,
+            "min_special": 0,
+            "min_upper": 0,
+            "number": true,
+            "numeric": true,
+            "override_special": null,
+            "result": "c8bfz0",
+            "special": false,
+            "upper": false
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
