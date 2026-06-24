@@ -210,7 +210,7 @@ flowchart TB
 | Choix | Justification |
 |---|---|
 | **OpenVPN** (vs IPsec) | Imposé par l'entretien. Avantages : passe les NAT/pare-feu en UDP/443 au besoin, PKI claire (X.509), configuration en fichiers texte versionnables — idéal pour un dépôt git. |
-| **Passerelles Debian** (vs pfSense) | Léger pour VirtualBox, configurations en **fichiers texte** lisibles et reversionnables dans ce dépôt, démontre la maîtrise Linux/réseau. pfSense reste une alternative GUI valable. |
+| **Passerelles Ubuntu Server** (vs pfSense) | Léger pour VirtualBox, configurations en **fichiers texte** lisibles et reversionnables dans ce dépôt, démontre la maîtrise Linux/réseau. pfSense reste une alternative GUI valable. |
 | **Étoile** (vs maillage) | Trafic centré sur le siège, ajout de site trivial (Bayonne le prouve), filtrage centralisé. |
 | **Nextcloud** (vs OneDrive) | Auto-hébergé → coûts maîtrisés ; **journalisation native des accès** (app `admin_audit`) répondant directement à l'exigence CNIL ; partages externes pour l'espace client. |
 | **DMZ pour le web** | Un service exposé à Internet ne doit jamais être dans le LAN de production : en cas de compromission, l'attaquant n'atteint pas directement les données clients. |
@@ -220,7 +220,7 @@ flowchart TB
 ## 2.6 Vue par couche (résumé)
 
 - **Couche WAN/Internet** : NAT Network `inet-sim` (203.0.113.0/24).
-- **Couche périmètre** : 3 passerelles Debian (NAT, pare-feu nftables, OpenVPN).
+- **Couche périmètre** : 3 passerelles Ubuntu 24.04 (NAT, pare-feu nftables, OpenVPN).
 - **Couche services** : AD/DNS, Nextcloud, Veeam, Sage (LAN Bordeaux) ; web (DMZ) ; DC2 (LAN La Rochelle).
 - **Couche poste** : clients en agence + télétravailleurs en VPN.
 
@@ -232,13 +232,13 @@ flowchart TB
 
 | VM | OS | vCPU | RAM | Disque | Réseaux (NIC1 / NIC2 / NIC3) |
 |---|---|---|---|---|---|
-| `GW-BDX` | Unbuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-bdx` / Internal `dmz-bdx` |
-| `GW-LR` | Unbuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-lr` |
-| `GW-BAY` | Unbuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-bay` |
+| `GW-BDX` | Ubuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-bdx` / Internal `dmz-bdx` |
+| `GW-LR` | Ubuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-lr` |
+| `GW-BAY` | Ubuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-bay` |
 | `SRV-AD` | Windows Server 2022 | 2 | 2048 Mo | 40 Go | Internal `lan-bdx` |
-| `SRV-NEXTCLOUD` | Unbuntu 24.04 | 2 | 2048 Mo | 30 Go | Internal `lan-bdx` |
+| `SRV-NEXTCLOUD` | Ubuntu 24.04 | 2 | 2048 Mo | 30 Go | Internal `lan-bdx` |
 | `SRV-VEEAM` | Windows Server 2022 | 2 | 4096 Mo | 60 Go | Internal `lan-bdx` |
-| `SRV-WEB` | Unbuntu 24.04 | 1 | 512 Mo | 10 Go | Internal `dmz-bdx` |
+| `SRV-WEB` | Ubuntu 24.04 | 1 | 512 Mo | 10 Go | Internal `dmz-bdx` |
 | `SRV-SAGE` | Windows Server 2022 | 2 | 2048 Mo | 40 Go | Internal `lan-bdx` |
 | `SRV-DC2` | Windows Server 2022 (Core) | 2 | 2048 Mo | 40 Go | Internal `lan-lr` |
 | `CLIENT-LR` | Windows 10/11 | 2 | 2048 Mo | 40 Go | Internal `lan-lr` |
@@ -306,14 +306,14 @@ VBoxManage natnetwork add --netname inet-sim \
 
 ```bash
 VM="GW-BDX"
-VBoxManage createvm --name "$VM" --ostype Debian_64 --register
+VBoxManage createvm --name "$VM" --ostype Ubuntu24_LTS_64 --register
 VBoxManage modifyvm "$VM" --memory 512 --cpus 1 --paravirtprovider default
 VBoxManage createhd --filename "$HOME/VirtualBox VMs/$VM/$VM.vdi" --size 8000 --variant Standard
 VBoxManage storagectl "$VM" --name SATA --add sata --controller IntelAhci
 VBoxManage storageattach "$VM" --storagectl SATA --port 0 --device 0 --type hdd \
   --medium "$HOME/VirtualBox VMs/$VM/$VM.vdi"
 VBoxManage storageattach "$VM" --storagectl SATA --port 1 --device 0 --type dvddrive \
-  --medium "$HOME/iso/debian-12-netinst.iso"
+  --medium "$HOME/iso/ubuntu-24.04-live-server-amd64.iso"
 
 # NIC1 = WAN (NAT Network), NIC2 = LAN, NIC3 = DMZ
 VBoxManage modifyvm "$VM" --nic1 natnetwork --nat-network1 inet-sim
@@ -323,26 +323,38 @@ VBoxManage modifyvm "$VM" --nic3 intnet --intnet3 dmz-bdx
 
 L'ensemble est automatisé dans `scripts/provision-virtualbox.sh`.
 
-## 3.5 Configuration réseau des invités
+## 3.5 Configuration réseau des invités (Ubuntu 24.04 → Netplan)
 
-### Passerelle Bordeaux — `/etc/network/interfaces`
+Ubuntu Server 24.04 configure le réseau avec **Netplan** (et non `/etc/network/interfaces` comme Debian). Les fichiers se trouvent dans `/etc/netplan/*.yaml`, le renderer par défaut est `systemd-networkd`. On applique avec `sudo netplan apply`.
 
-```ini
-# NIC1 — WAN (Internet simulé)
-auto enp0s3
-iface enp0s3 inet static
-    address 203.0.113.11/24
-    gateway 203.0.113.1          # passerelle du NAT Network VirtualBox
+> ⚠️ Le YAML est **sensible à l'indentation** (espaces, pas de tabulations). Sur 24.04, Netplan exige aussi que le fichier soit en **permissions 600** (`sudo chmod 600 /etc/netplan/01-fiducis.yaml`), sinon un avertissement s'affiche.
 
-# NIC2 — LAN Bordeaux
-auto enp0s8
-iface enp0s8 inet static
-    address 10.10.0.254/24
+### Passerelle Bordeaux — `/etc/netplan/01-fiducis.yaml`
 
-# NIC3 — DMZ
-auto enp0s9
-iface enp0s9 inet static
-    address 172.16.10.254/24
+```yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s3:                       # NIC1 — WAN (Internet simulé)
+      dhcp4: false
+      addresses: [203.0.113.11/24]
+      routes:
+        - to: default
+          via: 203.0.113.1        # passerelle du NAT Network VirtualBox
+      nameservers:
+        addresses: [1.1.1.1]      # résolution Internet pour les MAJ
+    enp0s8:                       # NIC2 — LAN Bordeaux
+      dhcp4: false
+      addresses: [10.10.0.254/24]
+    enp0s9:                       # NIC3 — DMZ
+      dhcp4: false
+      addresses: [172.16.10.254/24]
+```
+
+```bash
+sudo chmod 600 /etc/netplan/01-fiducis.yaml
+sudo netplan apply
 ```
 
 ### Activation du routage (toutes les passerelles)
@@ -355,21 +367,29 @@ net.ipv4.ip_forward = 1
 sudo sysctl --system
 ```
 
-### Exemple serveur LAN (Nextcloud) — `/etc/network/interfaces`
+### Exemple serveur LAN (Nextcloud) — `/etc/netplan/01-fiducis.yaml`
 
-```ini
-auto enp0s3
-iface enp0s3 inet static
-    address 10.10.0.20/24
-    gateway 10.10.0.254          # la passerelle du site
-    dns-nameservers 10.10.0.10   # le contrôleur de domaine / DNS
+```yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s3:
+      dhcp4: false
+      addresses: [10.10.0.20/24]
+      routes:
+        - to: default
+          via: 10.10.0.254        # la passerelle du site
+      nameservers:
+        addresses: [10.10.0.10]   # le contrôleur de domaine / DNS
+        search: [fiducis.lan]
 ```
 
 ## 3.6 Vérifications de base
 
 ```bash
 # Depuis la passerelle Bordeaux : Internet OK ?
-ping -c2 deb.debian.org
+ping -c2 archive.ubuntu.com
 
 # Depuis un serveur du LAN : sortie Internet via la passerelle ?
 ping -c2 10.10.0.254 && ping -c2 1.1.1.1
@@ -760,7 +780,7 @@ Décision du 2ᵉ entretien : **tout rapatrier en interne**. On sort de OneDrive
 
 ## 6.2 Nextcloud — fichiers et espace client
 
-### Installation (Debian 12, `SRV-NEXTCLOUD`)
+### Installation (Ubuntu 24.04, `SRV-NEXTCLOUD`)
 
 Pile LAMP/LEMP : Nginx + PHP-FPM + MariaDB.
 
