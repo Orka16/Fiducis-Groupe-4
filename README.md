@@ -1,8 +1,8 @@
 # MSPR FIDUCIS — dossier technique
 
-Cabinet d'expertise comptable, juridique et conseil RH, 35 collaborateurs, répartis sur Bordeaux (siège), La Rochelle, Bayonne (nouvelle antenne) et du télétravail régulier. Aujourd'hui les fichiers sont sur OneDrive, le site vitrine et l'espace client chez un prestataire coûteux, il n'y a ni VPN, ni sauvegarde, ni plan de reprise, et un contrôle CNIL impose de tracer les accès aux données clients. Une coupure Internet d'une journée à La Rochelle a déjà bloqué le travail.
+Cabinet d'expertise comptable, juridique et conseil RH, 35 collaborateurs, répartis sur Bordeaux (siège), La Rochelle, Bayonne (nouvelle antenne) et du télétravail régulier. Au départ, les fichiers sont sur OneDrive, le site vitrine et l'espace client chez un prestataire coûteux, et il n'y a ni VPN, ni sauvegarde, ni plan de reprise. Un contrôle CNIL impose de tracer les accès aux données clients, et une coupure Internet d'une journée à La Rochelle a déjà bloqué le travail.
 
-Virtualisation : VirtualBox. Passerelles sous Ubuntu 24.04, serveurs sous Windows Server 2022.
+Ce dépôt regroupe l'architecture, la maquette VirtualBox, les configurations réelles (OpenVPN, pare-feu, Nginx, supervision Docker, NTP), le code Terraform de la sauvegarde Azure et le site web. Virtualisation sous VirtualBox, passerelles/serveurs VPN sous Ubuntu 24.04, serveurs métier sous Windows Server 2022.
 
 ## Réponses aux entretiens
 
@@ -10,101 +10,98 @@ Virtualisation : VirtualBox. Passerelles sous Ubuntu 24.04, serveurs sous Window
 |---|---|
 | Accès entre Bordeaux, La Rochelle et le télétravail (pas de VPN, OneDrive aujourd'hui) | VPN site-à-site OpenVPN reliant les LAN en permanence + VPN client pour les télétravailleurs |
 | Nouvelle antenne à Bayonne (2e entretien) | Bayonne intégrée comme branche du VPN site-à-site (topologie en étoile, hub Bordeaux) |
-| Coupure Internet à La Rochelle (tout était bloqué) | Lien de secours par site dans le PRA ; les services internalisés restent dispo en local |
-| Pas de sauvegarde | Sauvegarde 3-2-1 avec Veeam (incrémental), copie hors-site externalisée sur Azure |
+| Coupure Internet à La Rochelle (tout était bloqué) | Lien de secours par site dans le PRA ; les services internalisés restent disponibles en local |
+| Pas de sauvegarde | Sauvegarde 3-2-1 : Veeam en local + System State de l'AD vers Azure Blob Storage |
 | Toutes les données sont sensibles | Chiffrement en transit et au repos, accès en moindre privilège |
 | Pas de PRA/PCA | PRA et PCA documentés et testés |
 | Traçabilité des accès clients (CNIL, 2e entretien) | Audit NTFS des accès fichiers + journaux centralisés + VPN nominatif |
-| Tout rapatrier en interne (2e entretien) | Fichiers sur serveur SMB interne, site web rapatrié en interne |
+| Tout rapatrier en interne (2e entretien) | Fichiers sur serveur SMB interne, site web rapatrié en interne (Nginx) |
 
-Ajout : supervision des serveurs avec alerte par mail dès qu'un serveur tombe.
+Ajouts : rôle NTP sur le DC, supervision Prometheus + Grafana en Docker, et provisionnement du stockage de sauvegarde Azure par Terraform.
 
 ## Architecture
 
-Topologie en étoile : Bordeaux concentre les services, La Rochelle et Bayonne sont des branches reliées par des tunnels chiffrés. Ce choix permet d'ajouter un site (Bayonne) en ajoutant simplement une branche, sans retoucher les autres. Contrepartie (panne du hub) traitée par un DC secondaire à La Rochelle dans le PRA.
+Topologie en étoile : Bordeaux concentre les services, La Rochelle et Bayonne sont des branches reliées par des tunnels OpenVPN. Chaque site possède un serveur VPN (srv-vpn-bdx / srv-vpn-lr / srv-vpn-bay) qui fait office de passerelle entre son LAN interne et le segment public. Ajouter un site (Bayonne) revient à ajouter une branche sans toucher aux autres. La contrepartie (panne du hub) est traitée par un contrôleur de domaine secondaire à La Rochelle dans le PRA.
 
 ```mermaid
 flowchart TB
-    INET(("Internet simulé<br/>203.0.113.0/24"))
-    subgraph BDX["Bordeaux - siège - LAN 10.10.0.0/24"]
-        GW["GW-BDX<br/>OpenVPN site-à-site + nomades"]
-        AD["SRV-AD - AD/DNS 10.10.0.10"]
-        FILES["SRV-FILES - SMB 10.10.0.20"]
-        VEEAM["SRV-VEEAM 10.10.0.30"]
-        SAGE["SRV-SAGE 10.10.0.40"]
-        SUP["SRV-SUPERVISION 10.10.0.50"]
-        WEB["SRV-WEB 10.10.0.60"]
+    INET(("Segment public<br/>10.10.0.0/24"))
+    subgraph BDX["Bordeaux - siège - LAN 192.168.10.0/24"]
+        VPNB["srv-vpn-bdx<br/>10.10.0.11 / 192.168.10.254<br/>OpenVPN + supervision Docker"]
+        AD["srv-ad-bdx<br/>AD / DNS / NTP - 192.168.10.1"]
+        FILES["srv-files - SMB 192.168.10.20"]
+        VEEAM["srv-veeam 192.168.10.30"]
+        SAGE["srv-sage 192.168.10.40"]
+        WEB["srv-web (Nginx) 192.168.10.60"]
     end
-    subgraph LR["La Rochelle - 10.20.0.0/24"]
-        GWL["GW-LR"]
-        DC2["SRV-DC2 - DC secondaire 10.20.0.10"]
-        PCL["Poste 10.20.0.50"]
+    subgraph LR["La Rochelle - LAN 192.168.20.0/24"]
+        VPNL["srv-vpn-lr 10.10.0.12 / 192.168.20.254"]
+        ADL["srv-ad-lr - DC secondaire 192.168.20.1"]
+        PCL["Poste 192.168.20.50"]
     end
-    subgraph BAY["Bayonne (nouvelle antenne) - 10.30.0.0/24"]
-        GWY["GW-BAY"]
-        PCB["Poste 10.30.0.50"]
+    subgraph BAY["Bayonne (nouvelle antenne) - LAN 192.168.30.0/24"]
+        VPNY["srv-vpn-bay 10.10.0.13 / 192.168.30.254"]
+        PCB["Poste 192.168.30.50"]
     end
-    AZ(("Azure - sauvegarde hors-site"))
-    INET --- GW & GWL & GWY
-    GW --- AD & FILES & VEEAM & SAGE & SUP & WEB
-    GWL --- DC2 & PCL
-    GWY --- PCB
-    GW <-->|tunnel site-à-site| GWL
-    GW <-->|tunnel site-à-site| GWY
-    NOM["Télétravailleurs (VPN)"] -.-> GW
-    VEEAM -->|copie hors-site| AZ
-    SUP -.->|mail si serveur down| MAIL["Alerte mail"]
+    AZ(("Azure Blob Storage<br/>System State AD (hors-site)"))
+    INET --- VPNB & VPNL & VPNY
+    VPNB --- AD & FILES & VEEAM & SAGE & WEB
+    VPNL --- ADL & PCL
+    VPNY --- PCB
+    VPNB <-->|tunnel site-à-site 10.99.0.0/24| VPNL
+    VPNB <-->|tunnel site-à-site 10.99.0.0/24| VPNY
+    NOM["Télétravailleurs (VPN 10.8.0.0/24)"] -.-> VPNB
+    AD -->|System State -> azcopy| AZ
 ```
 
 ### Plan d'adressage
 
 | Rôle | Réseau | Type VirtualBox |
 |---|---|---|
-| Internet simulé | `203.0.113.0/24` | NAT Network `inet-sim` |
-| LAN Bordeaux | `10.10.0.0/24` | Internal `lan-bdx` |
-| LAN La Rochelle | `10.20.0.0/24` | Internal `lan-lr` |
-| LAN Bayonne | `10.30.0.0/24` | Internal `lan-bay` |
+| Segment public (serveurs VPN) | `10.10.0.0/24` | NAT Network `inet-sim` |
+| LAN Bordeaux | `192.168.10.0/24` | Internal `lan-bdx` |
+| LAN La Rochelle | `192.168.20.0/24` | Internal `lan-lr` |
+| LAN Bayonne | `192.168.30.0/24` | Internal `lan-bay` |
 | Tunnel site-à-site | `10.99.0.0/24` | OpenVPN |
 | Pool télétravail | `10.8.0.0/24` | OpenVPN |
 
-Passerelles : GW-BDX 203.0.113.11 / 10.10.0.254, GW-LR 203.0.113.12 / 10.20.0.254, GW-BAY 203.0.113.13 / 10.30.0.254. Serveurs Bordeaux : SRV-AD 10.10.0.10, SRV-FILES 10.10.0.20, SRV-VEEAM 10.10.0.30, SRV-SAGE 10.10.0.40, SRV-SUPERVISION 10.10.0.50, SRV-WEB 10.10.0.60. La Rochelle : SRV-DC2 10.20.0.10 + un poste. Bayonne : un poste (10.30.0.50), l'antenne ne portant pas de serveur pour l'instant.
+Serveurs VPN (public / LAN) : srv-vpn-bdx 10.10.0.11 / 192.168.10.254, srv-vpn-lr 10.10.0.12 / 192.168.20.254, srv-vpn-bay 10.10.0.13 / 192.168.30.254. Bordeaux : srv-ad-bdx 192.168.10.1 (AD/DNS/NTP), srv-files 192.168.10.20, srv-veeam 192.168.10.30, srv-sage 192.168.10.40, srv-web 192.168.10.60. La Rochelle : srv-ad-lr 192.168.20.1 (DC secondaire) + un poste. Bayonne : un poste (192.168.30.50), l'antenne ne portant pas de serveur pour l'instant.
 
 ## Maquette VirtualBox
 
 | VM | OS | RAM | Réseaux |
 |---|---|---|---|
-| GW-BDX | Ubuntu 24.04 | 512 Mo | WAN + LAN Bordeaux |
-| GW-LR / GW-BAY | Ubuntu 24.04 | 512 Mo | WAN + LAN du site |
-| SRV-AD | Windows Server 2022 | 2 Go | LAN Bordeaux |
-| SRV-FILES | Windows Server 2022 | 2 Go | LAN Bordeaux |
-| SRV-VEEAM | Windows Server 2022 | 4 Go | LAN Bordeaux |
-| SRV-SAGE | Windows Server 2022 | 2 Go | LAN Bordeaux |
-| SRV-SUPERVISION | Ubuntu 24.04 | 1 Go | LAN Bordeaux |
-| SRV-WEB | Ubuntu 24.04 | 512 Mo | LAN Bordeaux |
-| SRV-DC2 | Windows Server 2022 (Core) | 2 Go | LAN La Rochelle |
+| srv-vpn-bdx | Ubuntu 24.04 | 1 Go | public + LAN Bordeaux (OpenVPN + Docker supervision) |
+| srv-vpn-lr / srv-vpn-bay | Ubuntu 24.04 | 512 Mo | public + LAN du site |
+| srv-ad-bdx | Windows Server 2022 | 2 Go | LAN Bordeaux (AD/DNS/NTP) |
+| srv-files | Windows Server 2022 | 2 Go | LAN Bordeaux |
+| srv-veeam | Windows Server 2022 | 4 Go | LAN Bordeaux |
+| srv-sage | Windows Server 2022 | 2 Go | LAN Bordeaux |
+| srv-web | Ubuntu 24.04 | 512 Mo | LAN Bordeaux (Nginx) |
+| srv-ad-lr | Windows Server 2022 (Core) | 2 Go | LAN La Rochelle |
 | Poste La Rochelle / Bayonne | Windows 10/11 | 2 Go | LAN du site |
 
-Le NAT Network `inet-sim` simule Internet : les passerelles s'y voient entre elles et atteignent le vrai Internet pour les mises à jour. Les LAN sont des Internal Networks. La création est scriptée (`scripts/provision-virtualbox.sh`). On démarre les VM par groupe selon la démo plutôt que toutes ensemble.
+Le NAT Network `inet-sim` (10.10.0.0/24) joue le segment « public » qui relie les serveurs VPN et leur donne accès à Internet pour les mises à jour. Les LAN sont des Internal Networks. La création est scriptée (`scripts/provision-virtualbox.sh`). On démarre les VM par groupe selon la démo plutôt que toutes ensemble.
 
-Le réseau sous Ubuntu 24.04 se configure avec Netplan. Exemple pour la passerelle de Bordeaux (`/etc/netplan/01-fiducis.yaml`, à mettre en chmod 600 puis `sudo netplan apply`) :
+Le réseau sous Ubuntu 24.04 se configure avec Netplan. Exemple pour le serveur VPN de Bordeaux (`/etc/netplan/01-fiducis.yaml`, chmod 600 puis `sudo netplan apply`) :
 
 ```yaml
 network:
   version: 2
   renderer: networkd
   ethernets:
-    enp0s3:                 # WAN
-      addresses: [203.0.113.11/24]
-      routes: [{to: default, via: 203.0.113.1}]
+    enp0s3:                 # segment public
+      addresses: [10.10.0.11/24]
+      routes: [{to: default, via: 10.10.0.1}]
     enp0s8:                 # LAN Bordeaux
-      addresses: [10.10.0.254/24]
+      addresses: [192.168.10.254/24]
 ```
 
-Le routage est activé sur les passerelles (`net.ipv4.ip_forward=1`).
+Le routage est activé sur les serveurs VPN (`net.ipv4.ip_forward=1`).
 
 ## VPN site-à-site (Bordeaux, La Rochelle, Bayonne)
 
-Bordeaux est serveur OpenVPN, La Rochelle et Bayonne sont clients. Bayonne, ouverte au 2e entretien, est raccordée exactement comme La Rochelle : une branche de plus sur l'étoile, sans rien changer aux sites existants. `client-to-client` permet aux deux agences de communiquer en passant par le hub. La PKI (Easy-RSA) génère une autorité de certification et un certificat par passerelle (`scripts/init-pki.sh`). Chaque agence est déclarée dans un fichier CCD avec son IP de tunnel et la route vers son LAN.
+srv-vpn-bdx est serveur OpenVPN, srv-vpn-lr et srv-vpn-bay sont clients. Bayonne, ouverte au 2e entretien, est raccordée exactement comme La Rochelle : une branche de plus sur l'étoile. `client-to-client` permet aux deux agences de communiquer en passant par le hub. La PKI (Easy-RSA) génère une autorité de certification et un certificat par serveur VPN (`scripts/init-pki.sh`). Chaque agence est déclarée dans un fichier CCD avec son IP de tunnel et la route vers son LAN (`iroute`).
 
 Extrait du serveur (`configs/openvpn/server-site2site.conf`) :
 
@@ -113,46 +110,52 @@ topology subnet
 server 10.99.0.0 255.255.255.0
 client-config-dir /etc/openvpn/ccd
 client-to-client
-route 10.20.0.0 255.255.255.0
-route 10.30.0.0 255.255.255.0
-push "route 10.10.0.0 255.255.255.0"
-push "route 10.20.0.0 255.255.255.0"
-push "route 10.30.0.0 255.255.255.0"
+route 192.168.20.0 255.255.255.0
+route 192.168.30.0 255.255.255.0
+push "route 192.168.10.0 255.255.255.0"
+push "route 192.168.20.0 255.255.255.0"
+push "route 192.168.30.0 255.255.255.0"
 ```
 
-Le fichier CCD de chaque agence (`ccd/larochelle`, `ccd/bayonne`) fixe son IP de tunnel et déclare son réseau avec `iroute`, sans quoi le serveur ne sait pas router le retour. Le pare-feu et le NAT des passerelles sont dans `configs/openvpn/nftables-gw-bdx.conf` : le trafic inter-sites n'est pas NATé, seul l'accès Internet l'est.
+Le pare-feu et le NAT sont dans `configs/openvpn/nftables-gw-bdx.conf` : le trafic inter-sites (192.168.0.0/16) n'est pas NATé, seul l'accès Internet l'est ; la publication web (80/443) est redirigée vers srv-web.
 
 ## VPN télétravail
 
-Une seconde instance OpenVPN tourne sur Bordeaux (port et sous-réseau distincts du site-à-site), avec un certificat par collaborateur, révocable individuellement — c'est aussi ce qui permet d'identifier nominativement qui se connecte. Le profil `.ovpn` est assemblé par `scripts/make-ovpn.sh`. On reste en split-tunnel : seul le trafic vers les ressources internes passe par le VPN. Une fois connecté, le télétravailleur accède au partage SMB et à Sage selon ses droits AD. Pour révoquer un accès (départ, perte de portable) : `easyrsa revoke`, régénération de la CRL, activation de `crl-verify`.
+Une seconde instance OpenVPN tourne sur srv-vpn-bdx (port et sous-réseau distincts), avec un certificat par collaborateur, révocable individuellement — ce qui permet aussi d'identifier nominativement qui se connecte. Le profil `.ovpn` est assemblé par `scripts/make-ovpn.sh`. On reste en split-tunnel : seul le trafic vers les ressources internes passe par le VPN. Une fois connecté, le télétravailleur accède au partage SMB et à Sage selon ses droits AD. Révocation (départ, perte de portable) : `easyrsa revoke`, régénération de la CRL, activation de `crl-verify`.
+
+## Annuaire, DNS et temps (NTP)
+
+srv-ad-bdx (192.168.10.1) porte l'Active Directory et le DNS interne, et sert de source de temps NTP pour tout le domaine : le DC détenteur du rôle PDC se synchronise sur des serveurs NTP fiables, les postes et serveurs prennent l'heure depuis l'AD. Une heure cohérente est indispensable à Kerberos, à l'horodatage des journaux d'audit (CNIL) et à la corrélation des métriques de supervision. Configuration `w32time` dans `configs/ad/ntp-dc.md`.
 
 ## Internalisation des fichiers et du web
 
-Les fichiers quittent OneDrive pour un serveur de fichiers Windows (SRV-FILES), avec des partages SMB intégrés à l'AD. Les permissions suivent des groupes AD par métier (comptables, juristes, RH, direction) en moindre privilège, et l'énumération basée sur l'accès masque ce que l'utilisateur n'a pas le droit de voir. La migration depuis OneDrive se fait par export puis copie sur les partages, avec déploiement des lecteurs réseau par GPO.
+Les fichiers quittent OneDrive pour un serveur de fichiers Windows (srv-files), partages SMB intégrés à l'AD. Les permissions suivent des groupes AD par métier (comptables, juristes, RH, direction) en moindre privilège, avec l'énumération basée sur l'accès. La migration se fait par export OneDrive puis copie sur les partages, et déploiement des lecteurs réseau par GPO.
 
-Le site vitrine, l'espace client et la prise de rendez-vous sont rapatriés en interne sur SRV-WEB (`configs/web/fiducis-vitrine.conf` : HTTPS forcé, en-têtes de sécurité, reverse proxy pour le module de rendez-vous). Le serveur est durci et seuls les ports 80/443 sont redirigés vers lui depuis Internet. Sage reste sur son serveur dédié, désormais joignable depuis toutes les agences via le tunnel et inclus dans les sauvegardes.
+Le site vitrine, l'espace client et la prise de rendez-vous sont rapatriés en interne sur srv-web sous Nginx. Le site est livré dans ce dépôt (`web/site/index.html`, un seul fichier HTML autonome) et sa configuration dans `configs/web/fiducis-vitrine.conf` (HTTPS forcé, en-têtes de sécurité, URL propres, reverse proxy `/rdv/` et `/espace-client/` vers les applications internes). Le site est purement front-end et ne stocke aucune donnée client. Sage reste sur srv-sage, joignable depuis toutes les agences via le tunnel et inclus dans les sauvegardes.
 
-## Supervision et alertes
+## Supervision (Prometheus + Grafana, Docker)
 
-Un serveur de supervision (SRV-SUPERVISION) surveille en continu la disponibilité des serveurs (AD, fichiers, Veeam, Sage, web) et des passerelles. Dès qu'une cible ne répond plus, une alerte est envoyée **par mail** à l'équipe. La supervision repose sur Prometheus (collecte) et Alertmanager (envoi des notifications mail) ; Zabbix est une alternative équivalente.
+La supervision tourne en conteneurs Docker sur srv-vpn-bdx : Prometheus collecte les métriques, Grafana affiche les tableaux de bord (datasource Prometheus auto-provisionnée), node-exporter expose les métriques système. Tout est dans `configs/monitoring/` (`docker-compose.yml`, `prometheus/prometheus.yml`, `grafana/provisioning/`).
 
-Règle d'alerte type : une cible considérée « down » pendant plus d'une minute déclenche une notification. La configuration mail d'Alertmanager est dans `configs/monitoring/alertmanager.yml` et la règle de détection dans `configs/monitoring/alert-rules.yml`.
+Cibles actuelles (`prometheus.yml`) :
 
 ```yaml
-# extrait alertmanager.yml — envoi mail
-route:
-  receiver: equipe-it
-receivers:
-  - name: equipe-it
-    email_configs:
-      - to: alertes@fiducis.fr
-        from: supervision@fiducis.fr
-        smarthost: smtp.fiducis.fr:587
+scrape_configs:
+  - job_name: 'vpn-servers'
+    static_configs:
+      - targets: ['10.10.0.11:9100']   # srv-vpn-bdx
+      - targets: ['10.10.0.12:9100']   # srv-vpn-lr
+      - targets: ['10.10.0.13:9100']   # srv-vpn-bay
+  - job_name: 'ad-dns-bordeaux'
+    static_configs:
+      - targets: ['192.168.10.1:9182'] # srv-ad-bdx (windows_exporter)
 ```
 
-Cette supervision sert aussi le PRA : on est prévenu immédiatement d'une panne au lieu de la découvrir quand un utilisateur se plaint.
+node_exporter (Linux) et windows_exporter (Windows) exposent les flux réseau, l'état des cartes réseau et le stockage (IOPS, débit disque, Go libres) — visualisés dans Grafana et extensibles à d'autres serveurs (fichiers, Veeam, Sage, web, srv-ad-lr) en ajoutant des cibles.
 
-## Sauvegarde 3-2-1 (Veeam, hors-site Azure)
+Alertes mail (optionnel) : `configs/monitoring/alertmanager.yml` et `alert-rules.yml` sont fournis pour envoyer un mail dès qu'une cible tombe (`up == 0` pendant 1 min) ou qu'un disque sature ; il suffit d'ajouter le service alertmanager au compose et les directives `rule_files` / `alerting` à `prometheus.yml` (détails dans `configs/monitoring/README.md`).
+
+## Sauvegarde 3-2-1 (Veeam local + Azure Blob Storage)
 
 Trois copies, deux supports différents, une hors-site :
 
@@ -160,21 +163,27 @@ Trois copies, deux supports différents, une hors-site :
 flowchart LR
     PROD["1 - Production<br/>AD, fichiers, Sage"]
     LOCAL["2 - Veeam local<br/>repository Bordeaux"]
-    AZ["3 - Azure Blob<br/>immuable, hors-site"]
+    AZ["3 - Azure Blob Storage<br/>System State AD (hors-site)"]
     PROD -->|Backup Job incrémental| LOCAL
-    LOCAL -->|Backup Copy Job| AZ
+    AD2["srv-ad-bdx / srv-ad-lr"] -->|wbadmin + azcopy| AZ
 ```
 
-La copie hors-site est externalisée sur **Azure** : un Backup Copy Job Veeam envoie les sauvegardes vers un conteneur Azure Blob, avec immuabilité activée (protection contre la suppression et le ransomware) et chiffrement. Par rapport à une copie sur un autre site, on évite le matériel à maintenir et on bénéficie d'un stockage hors-site élastique.
+En local, **Veeam** sauvegarde les serveurs et les fichiers (copie de production + repository local sur srv-veeam). Pour l'annuaire, la copie hors-site est externalisée sur **Azure Blob Storage** : le **System State** des contrôleurs de domaine (srv-ad-bdx, et le réplica srv-ad-lr) est sauvegardé par `wbadmin start systemstatebackup` puis envoyé dans un conteneur Blob `ad-systemstate` via azcopy, sous un préfixe horodaté, par une tâche planifiée quotidienne.
 
-| Données | Fréquence | Rétention locale | Hors-site (Azure) |
-|---|---|---|---|
-| Sage (compta/paie) | Quotidienne (incrémental) | 30 jours | 90 jours |
-| Fichiers / pièces clients | Quotidienne (incrémental) | 30 jours | 90 jours |
-| AD (system state) | Quotidienne | 15 jours | 30 jours |
-| Archive mensuelle | Mensuelle (complet) | 12 mois | 12 mois |
+Le Blob Storage est provisionné par **Terraform** (`terraform/`) :
 
-On teste réellement les restaurations (un fichier mensuellement, une base Sage et l'AD par trimestre). Une sauvegarde non testée ne compte pas — c'était précisément le maillon manquant. Chaque test fait l'objet d'un PV daté.
+- compte de stockage StorageV2 au nom unique `stadbkpbdx<suffixe aléatoire>`, `access_tier = Cool`, TLS 1.2, HTTPS only, versioning + corbeille 30 jours ;
+- conteneur Blob privé `ad-systemstate` ;
+- politique de cycle de vie : passage en *cool* après 7 jours, en *archive* après 30 jours, suppression après 180 jours, et purge des versions après 90 jours (coûts maîtrisés).
+
+Le code Terraform a été **écrit et validé en local** (`terraform init` / `validate` / `plan`, providers azurerm ~> 4.0 et random) **mais n'a pas pu être appliqué sur Azure** : aucun abonnement actif n'était disponible au moment du rendu (le `terraform.tfstate` ne contient aucune ressource). Le provisionnement réel et la planification sont décrits dans `terraform/README.md` (avec `terraform/backup-ad.ps1`).
+
+| Données | Mécanisme | Hors-site |
+|---|---|---|
+| Fichiers / pièces clients, Sage | Veeam (incrémental quotidien, repository local) | à compléter selon besoin |
+| Annuaire (System State AD) | wbadmin + azcopy, quotidien | Azure Blob `ad-systemstate` (cool/archive) |
+
+On teste réellement les restaurations (fichier mensuellement, AD par trimestre en mode DSRM). Une sauvegarde non testée ne compte pas. Chaque test fait l'objet d'un PV daté. Rappel : ne pas restaurer un System State plus vieux que la *tombstone lifetime* (180 jours).
 
 ## PRA / PCA
 
@@ -184,13 +193,13 @@ On teste réellement les restaurations (un fichier mensuellement, une base Sage 
 | Active Directory / DNS | réplication (~0) | < 1 h |
 | Site web / espace client | 24 h | 8 h |
 
-Continuité : le DC secondaire de La Rochelle maintient l'authentification en cas de panne du siège ; les services internalisés restent disponibles localement ; la supervision alerte immédiatement en cas de panne. Reprise : restauration depuis le repository Veeam local pour un incident isolé, ou depuis Azure en cas de sinistre Bordeaux. Les runbooks (restauration d'un fichier, sinistre du siège, ransomware) sont écrits pour pouvoir être suivis sans expertise pointue.
+Continuité : srv-ad-lr (La Rochelle) maintient l'authentification en cas de panne du siège ; les services internalisés restent disponibles localement ; la supervision permet de détecter une panne immédiatement. Reprise : restauration depuis le repository Veeam local pour un incident isolé, ou restauration du System State depuis Azure Blob (mode DSRM) en cas de sinistre du DC. Les runbooks (restauration d'un fichier, sinistre du siège, ransomware) sont écrits pour pouvoir être suivis sans expertise pointue.
 
 À noter pour la coupure Internet vécue à La Rochelle : un VPN seul ne la règle pas, puisque le tunnel a besoin du lien pour monter. La vraie continuité repose sur un lien de secours par site (4G/5G ou second FAI), conçu et documenté dans le PRA mais simulé dans la maquette faute de matériel.
 
 ## Traçabilité CNIL
 
-La traçabilité des accès aux fichiers clients s'appuie sur l'audit d'accès aux objets NTFS du serveur de fichiers : une GPO active l'audit du système de fichiers, et des SACL sont posées sur les dossiers sensibles, ce qui journalise qui accède à quel dossier et quand (`configs/ad/audit-fichiers.gpo.md`, évènements 4663/4670). Les journaux sont centralisés vers un collecteur (pour qu'un attaquant ne puisse pas effacer ses traces localement) et conservés de façon proportionnée : environ 6 mois pour les accès, 12 mois pour les évènements de sécurité. S'ajoutent les certificats VPN nominatifs, le chiffrement des données en transit et au repos, et une matrice d'habilitation par groupe AD. On peut ainsi produire, pour un dossier client donné, la liste horodatée des accès demandée par la CNIL.
+La traçabilité des accès aux fichiers clients s'appuie sur l'audit d'accès aux objets NTFS de srv-files : une GPO active l'audit du système de fichiers, et des SACL sont posées sur les dossiers sensibles, ce qui journalise qui accède à quel dossier et quand (`configs/ad/audit-fichiers.gpo.md`, évènements 4663/4670). Les journaux sont centralisés et conservés de façon proportionnée (environ 6 mois pour les accès, 12 mois pour les évènements de sécurité). S'ajoutent les certificats VPN nominatifs, le chiffrement en transit et au repos, et une matrice d'habilitation par groupe AD. On peut ainsi produire, pour un dossier client donné, la liste horodatée des accès demandée par la CNIL.
 
 ## Tests principaux
 
@@ -200,16 +209,19 @@ La traçabilité des accès aux fichiers clients s'appuie sur l'audit d'accès a
 | Communication inter-agences | La Rochelle joint Bayonne via le hub |
 | Accès aux ressources | Sage et partage SMB accessibles depuis une agence distante |
 | VPN télétravail | Connexion, accès interne, révocation d'un certificat refusée |
-| Sauvegarde / restauration | Backup Veeam, copie présente sur Azure, fichier restauré intègre |
-| Supervision | Arrêter un serveur déclenche bien un mail d'alerte |
+| Sauvegarde AD | wbadmin produit le System State, azcopy l'envoie dans le conteneur Azure |
+| Supervision | Grafana affiche les métriques des serveurs VPN et de l'AD ; cible down visible |
+| NTP | Les postes et serveurs sont synchronisés sur l'heure du DC |
 | Audit NTFS | Un accès à un dossier sensible génère un évènement horodaté |
 
 ## Contenu du dépôt
 
 - `configs/openvpn/` : serveurs et clients (site-à-site Bordeaux/La Rochelle/Bayonne + télétravail), CCD, pare-feu nftables
-- `configs/web/` : configuration du site vitrine interne
-- `configs/ad/` : GPO d'audit des accès fichiers (CNIL)
-- `configs/monitoring/` : Alertmanager (mail) et règles d'alerte
+- `configs/web/` : configuration Nginx du site
+- `configs/ad/` : GPO d'audit des accès fichiers (CNIL) et configuration NTP du DC
+- `configs/monitoring/` : stack Docker Prometheus + Grafana + node-exporter (vos fichiers réels) et extension alertes mail
+- `terraform/` : provisionnement Azure Blob Storage pour la sauvegarde du System State AD (code réel, validé en local, non encore appliqué sur Azure) + `backup-ad.ps1`
+- `web/site/` : le site FIDUCIS (un seul fichier HTML autonome)
 - `scripts/` : provisioning VirtualBox, génération de la PKI, profils .ovpn
 
-Les certificats et clés ne sont pas versionnés (voir `.gitignore`) ; ils se génèrent avec `scripts/init-pki.sh` et `scripts/make-ovpn.sh`.
+Les certificats, clés, secrets et états Terraform (`*.tfstate`, `terraform.tfvars`) ne sont pas versionnés (voir `.gitignore`). Le fichier de verrouillage `.terraform.lock.hcl` est conservé pour figer les versions de providers.
