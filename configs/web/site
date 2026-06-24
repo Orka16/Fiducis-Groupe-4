@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIDUCIS — Expertise comptable, juridique et conseil RH</title>
+<meta name="description" content="Cabinet pluridisciplinaire d'expertise comptable, juridique et conseil RH. Bordeaux, La Rochelle, Bayonne.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#14352B; --pine-deep:#0E2620; --ink:#1C2723; --paper:#F5F7F2; --card:#FFFFFF;
+  --brass:#B0843C; --brass-dk:#8B6730; --muted:#5B645E; --line:#D5DBD2; --line-dk:#2C3D36;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Spline Sans Mono",ui-monospace,Menlo,monospace;
+  --maxw:1140px; --pad:clamp(20px,5vw,64px);
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;} *{animation:none!important;transition:none!important;}}
+body{margin:0;font-family:var(--body);color:var(--ink);background:var(--paper);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+a{color:inherit;}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-inline:var(--pad);}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass-dk);margin:0 0 18px;}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.05;margin:0;}
+.lede{font-size:clamp(19px,2.2vw,22px);color:var(--muted);max-width:56ch;}
+
+.nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+.nav__inner{display:flex;align-items:center;justify-content:space-between;height:66px;}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:.02em;text-decoration:none;}
+.brand b{color:var(--brass-dk);font-weight:600;}
+.nav__links{display:flex;gap:28px;align-items:center;}
+.nav__links a{font-size:15px;text-decoration:none;color:var(--ink);}
+.nav__links a:hover{color:var(--brass-dk);}
+.nav__cta{font-family:var(--body);font-size:14px;text-decoration:none;border:1px solid var(--pine);color:var(--pine);padding:9px 16px;border-radius:2px;}
+.nav__cta:hover{background:var(--pine);color:var(--paper);}
+.nav__burger{display:none;background:none;border:0;font-size:22px;cursor:pointer;}
+@media (max-width:860px){
+  .nav__links{display:none;}
+  .nav__burger{display:block;}
+  .nav__links.open{display:flex;flex-direction:column;align-items:flex-start;gap:16px;position:absolute;top:66px;left:0;right:0;padding:20px var(--pad);background:var(--paper);border-bottom:1px solid var(--line);}
+}
+
+.hero{padding:clamp(56px,9vw,110px) 0 clamp(40px,6vw,72px);}
+.hero h1{font-size:clamp(38px,6.2vw,76px);letter-spacing:-0.015em;max-width:16ch;}
+.hero h1 em{font-style:italic;color:var(--brass-dk);}
+.hero .lede{margin-top:26px;}
+.hero__actions{margin-top:34px;display:flex;gap:14px;flex-wrap:wrap;}
+
+.btn{font-family:var(--body);font-size:15px;text-decoration:none;display:inline-block;padding:13px 22px;border-radius:2px;cursor:pointer;border:1px solid var(--pine);}
+.btn--solid{background:var(--pine);color:var(--paper);}
+.btn--solid:hover{background:var(--pine-deep);}
+.btn--ghost{background:transparent;color:var(--pine);}
+.btn--ghost:hover{background:var(--pine);color:var(--paper);}
+
+.ledger{margin-top:56px;border-top:1px solid var(--line);}
+.ledger__row{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);}
+.ledger__row span:first-child{color:var(--muted);font-size:15px;}
+.ledger__val{font-family:var(--mono);font-size:clamp(18px,2.4vw,24px);color:var(--pine);}
+
+.section{padding:clamp(56px,8vw,96px) 0;}
+.section--dark{background:var(--pine);color:var(--paper);}
+.section--dark .eyebrow{color:var(--brass);}
+.section--dark .lede{color:color-mix(in srgb,var(--paper) 78%,transparent);}
+.section__head{max-width:62ch;margin-bottom:48px;}
+.section__head h2{font-size:clamp(28px,4vw,44px);letter-spacing:-0.01em;}
+
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);}
+.pillar{background:var(--card);padding:32px 28px 36px;}
+.pillar__tag{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass-dk);}
+.pillar h3{font-size:25px;margin:14px 0 12px;}
+.pillar p{color:var(--muted);font-size:15.5px;margin:0 0 18px;}
+.pillar ul{margin:0;padding-left:18px;color:var(--ink);font-size:15px;}
+.pillar li{margin:6px 0;}
+@media (max-width:860px){.pillars{grid-template-columns:1fr;}}
+
+.approach{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,72px);align-items:start;}
+.approach__list{display:grid;gap:22px;}
+.approach__item{border-top:1px solid var(--line-dk);padding-top:18px;}
+.approach__item h3{font-size:21px;margin-bottom:8px;color:var(--paper);}
+.approach__item p{margin:0;color:color-mix(in srgb,var(--paper) 74%,transparent);font-size:15.5px;}
+@media (max-width:800px){.approach{grid-template-columns:1fr;}}
+
+.sites{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+.site-card{border:1px solid var(--line);background:var(--card);padding:26px;border-radius:2px;}
+.site-card h3{font-size:22px;margin-bottom:6px;}
+.site-card .role{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass-dk);}
+.site-card p{color:var(--muted);font-size:15px;margin:12px 0 0;}
+@media (max-width:800px){.sites{grid-template-columns:1fr;}}
+
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,64px);align-items:start;}
+@media (max-width:820px){.panel-grid{grid-template-columns:1fr;}}
+.form{background:var(--card);border:1px solid var(--line);border-radius:2px;padding:clamp(24px,4vw,38px);}
+.form h3{font-size:28px;margin:10px 0 24px;}
+.field{margin-bottom:20px;}
+.field label{display:block;font-size:14px;font-weight:600;margin-bottom:7px;color:var(--ink);}
+.field input,.field select,.field textarea{width:100%;font-family:var(--body);font-size:16px;color:var(--ink);padding:12px 14px;border:1px solid var(--line);border-radius:2px;background:#fff;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--brass);outline-offset:1px;border-color:var(--brass);}
+.field textarea{min-height:120px;resize:vertical;}
+.field--row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media (max-width:520px){.field--row{grid-template-columns:1fr;}}
+.form .btn--solid{width:100%;text-align:center;border:0;}
+.form__note{font-size:13.5px;color:var(--muted);margin-top:14px;}
+.aside h3{font-size:26px;margin-bottom:14px;color:var(--paper);}
+.aside p{color:color-mix(in srgb,var(--paper) 76%,transparent);}
+.aside ul{padding-left:18px;color:color-mix(in srgb,var(--paper) 88%,transparent);}
+.aside li{margin:10px 0;}
+.aside strong{color:var(--paper);}
+.lock{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);}
+
+.footer{background:var(--pine-deep);color:color-mix(in srgb,var(--paper) 70%,transparent);padding:56px 0 32px;}
+.footer__top{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:32px;}
+.footer .brand{color:var(--paper);display:inline-block;margin-bottom:12px;}
+.footer h4{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin:0 0 14px;font-weight:400;}
+.footer a{color:color-mix(in srgb,var(--paper) 78%,transparent);text-decoration:none;display:block;margin:7px 0;font-size:15px;}
+.footer a:hover{color:var(--paper);}
+.footer__legal{margin-top:40px;padding-top:20px;border-top:1px solid var(--line-dk);font-family:var(--mono);font-size:12px;letter-spacing:.04em;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+@media (max-width:800px){.footer__top{grid-template-columns:1fr;}}
+
+a:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:3px;}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.in{opacity:1;transform:none;}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav__inner">
+    <a class="brand" href="#top">FIDU<b>CIS</b></a>
+    <nav class="nav__links" id="menu">
+      <a href="#metiers">Nos métiers</a>
+      <a href="#approche">Notre approche</a>
+      <a href="#implantations">Implantations</a>
+      <a href="#rendez-vous">Rendez-vous</a>
+      <a class="nav__cta" href="#espace-client">Espace client</a>
+    </nav>
+    <button class="nav__burger" aria-label="Menu" aria-expanded="false" onclick="var m=document.getElementById('menu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'))">≡</button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Cabinet pluridisciplinaire · Comptabilité · Droit · RH</p>
+      <h1>Vos comptes, votre droit et vos équipes tenus au <em>même niveau d'exigence</em>.</h1>
+      <p class="lede">FIDUCIS accompagne dirigeants, professions libérales et PME du grand Sud-Ouest. Un interlocuteur unique, trois expertises qui se parlent, et une relation suivie d'une agence à l'autre.</p>
+      <div class="hero__actions">
+        <a class="btn btn--solid" href="#rendez-vous">Prendre rendez-vous</a>
+        <a class="btn btn--ghost" href="#metiers">Découvrir nos métiers</a>
+      </div>
+      <div class="ledger" aria-label="Repères du cabinet">
+        <div class="ledger__row"><span>Collaborateurs</span><span class="ledger__val">35</span></div>
+        <div class="ledger__row"><span>Implantations dans le Sud-Ouest</span><span class="ledger__val">03</span></div>
+        <div class="ledger__row"><span>Domaines réunis sous un même toit</span><span class="ledger__val">Compta · Droit · RH</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="metiers">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">Nos métiers</p>
+        <h2>Trois expertises, une seule équipe qui coordonne.</h2>
+        <p class="lede">Là où d'autres vous renvoient d'un prestataire à l'autre, FIDUCIS fait dialoguer comptabilité, juridique et RH sur un même dossier.</p>
+      </div>
+      <div class="pillars">
+        <article class="pillar">
+          <p class="pillar__tag">Expertise comptable</p>
+          <h3>Tenir, fiabiliser, conseiller</h3>
+          <p>De la tenue courante au bilan, avec une lecture de gestion qui éclaire vos décisions.</p>
+          <ul><li>Comptabilité et révision</li><li>Bilans et liasses fiscales</li><li>Tableaux de bord et prévisionnels</li><li>Accompagnement à la création</li></ul>
+        </article>
+        <article class="pillar">
+          <p class="pillar__tag">Conseil juridique</p>
+          <h3>Sécuriser chaque étape</h3>
+          <p>Le droit des affaires au service de vos projets, des statuts à la transmission.</p>
+          <ul><li>Constitution et vie des sociétés</li><li>Assemblées et actes courants</li><li>Cessions, fusions, transmissions</li><li>Veille et mise en conformité</li></ul>
+        </article>
+        <article class="pillar">
+          <p class="pillar__tag">Conseil RH &amp; paie</p>
+          <h3>Faire avancer vos équipes</h3>
+          <p>De la fiche de paie à la stratégie sociale, pour des employeurs sereins.</p>
+          <ul><li>Paie et déclarations sociales</li><li>Contrats et procédures</li><li>Conseil en droit social</li><li>Accompagnement RH au quotidien</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark" id="approche">
+    <div class="wrap approach">
+      <div class="section__head" style="margin-bottom:0">
+        <p class="eyebrow">Notre approche</p>
+        <h2>Une relation suivie, pas une prestation ponctuelle.</h2>
+        <p class="lede">Nous travaillons dans la durée, avec des outils numériques qui simplifient les échanges et gardent la trace de chaque pièce confiée.</p>
+      </div>
+      <div class="approach__list">
+        <div class="approach__item"><h3>Un interlocuteur dédié</h3><p>Un référent qui connaît votre dossier et coordonne les trois expertises quand c'est nécessaire.</p></div>
+        <div class="approach__item"><h3>Des échanges au bon endroit</h3><p>Vos documents transitent par un espace client sécurisé, jamais par des pièces jointes éparpillées.</p></div>
+        <div class="approach__item"><h3>La confidentialité par défaut</h3><p>Données chiffrées, accès tracés et conservés : vos informations restent les vôtres.</p></div>
+        <div class="approach__item"><h3>Une proximité réelle</h3><p>Trois agences dans le Sud-Ouest et des rendez-vous à distance quand votre agenda l'impose.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="implantations">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">Implantations</p>
+        <h2>Trois agences, un même cabinet.</h2>
+      </div>
+      <div class="sites">
+        <div class="site-card"><p class="role">Siège</p><h3>Bordeaux</h3><p>Direction et équipes pluridisciplinaires. Le point de coordination de tous les dossiers.</p></div>
+        <div class="site-card"><p class="role">Agence</p><h3>La Rochelle</h3><p>Vos interlocuteurs comptables, juridiques et sociaux au plus près de la côte atlantique.</p></div>
+        <div class="site-card"><p class="role">Nouvelle antenne</p><h3>Bayonne</h3><p>Notre dernière implantation, pour accompagner les entreprises du Pays basque et du Sud-Landes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark" id="rendez-vous">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">Prise de rendez-vous</p>
+        <h2>Parlons de votre projet.</h2>
+      </div>
+      <div class="panel-grid">
+        <form class="form" method="post" action="/rdv/demande">
+          <div class="field">
+            <label for="motif">Motif du rendez-vous</label>
+            <select id="motif" name="motif" required>
+              <option value="" disabled selected>Choisir un motif</option>
+              <option>Expertise comptable</option>
+              <option>Conseil juridique</option>
+              <option>Conseil RH et paie</option>
+              <option>Création d'entreprise</option>
+              <option>Premier contact / autre</option>
+            </select>
+          </div>
+          <div class="field field--row">
+            <div>
+              <label for="agence">Agence</label>
+              <select id="agence" name="agence" required>
+                <option value="" disabled selected>Choisir</option>
+                <option>Bordeaux (siège)</option>
+                <option>La Rochelle</option>
+                <option>Bayonne</option>
+                <option>À distance (visioconférence)</option>
+              </select>
+            </div>
+            <div>
+              <label for="date">Date souhaitée</label>
+              <input type="date" id="date" name="date" required>
+            </div>
+          </div>
+          <div class="field field--row">
+            <div><label for="prenom">Prénom</label><input type="text" id="prenom" name="prenom" required autocomplete="given-name"></div>
+            <div><label for="nom">Nom</label><input type="text" id="nom" name="nom" required autocomplete="family-name"></div>
+          </div>
+          <div class="field field--row">
+            <div><label for="email">E-mail</label><input type="email" id="email" name="email" required autocomplete="email" placeholder="vous@entreprise.fr"></div>
+            <div><label for="tel">Téléphone</label><input type="tel" id="tel" name="telephone" autocomplete="tel" placeholder="06 00 00 00 00"></div>
+          </div>
+          <div class="field">
+            <label for="message">Précisez votre demande (facultatif)</label>
+            <textarea id="message" name="message" placeholder="Quelques mots sur votre situation ou vos questions…"></textarea>
+          </div>
+          <button class="btn btn--solid" type="submit">Envoyer ma demande</button>
+          <p class="form__note">Ce n'est pas une confirmation : nous vous proposons un créneau ferme par e-mail sous un jour ouvré.</p>
+        </form>
+        <div class="aside">
+          <h3>Comment ça se passe</h3>
+          <ul>
+            <li><strong>Vous envoyez votre demande</strong> avec le motif et l'agence.</li>
+            <li><strong>Nous revenons vers vous</strong> sous un jour ouvré avec un créneau.</li>
+            <li><strong>Vous échangez avec l'expert concerné</strong>, sur place ou en visio.</li>
+          </ul>
+          <p style="margin-top:22px;">Une urgence ? Écrivez à <a href="mailto:contact@fiducis.fr" style="color:var(--brass);">contact@fiducis.fr</a>.</p>
+          <p class="lock" style="margin-top:24px;">Bordeaux · La Rochelle · Bayonne · Visioconférence</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="espace-client">
+    <div class="wrap">
+      <div class="section__head">
+        <p class="eyebrow">Espace client sécurisé</p>
+        <h2>Vos documents, au bon endroit.</h2>
+      </div>
+      <div class="panel-grid">
+        <form class="form" method="post" action="/espace-client/connexion" autocomplete="on">
+          <p class="lock" style="color:var(--brass-dk)">Connexion chiffrée</p>
+          <h3>Se connecter</h3>
+          <div class="field"><label for="id">Identifiant</label><input type="text" id="id" name="identifiant" required autocomplete="username" placeholder="prenom.nom"></div>
+          <div class="field"><label for="pwd">Mot de passe</label><input type="password" id="pwd" name="motdepasse" required autocomplete="current-password" placeholder="••••••••"></div>
+          <button class="btn btn--solid" type="submit">Accéder à mon espace</button>
+          <p class="form__note">Mot de passe oublié ou premier accès ? Contactez votre référent ou écrivez à <a href="mailto:support@fiducis.fr">support@fiducis.fr</a>. Ne partagez jamais vos identifiants.</p>
+        </form>
+        <div class="aside" style="color:var(--ink)">
+          <h3 style="color:var(--ink)">Ce que vous y faites</h3>
+          <p style="color:var(--muted)">L'espace client remplace les pièces jointes par mail. Tout y est regroupé, daté et conservé.</p>
+          <ul style="color:var(--ink)">
+            <li style="color:var(--ink)"><strong style="color:var(--ink)">Déposer vos pièces</strong> — factures, relevés, contrats, justificatifs.</li>
+            <li style="color:var(--ink)"><strong style="color:var(--ink)">Récupérer vos documents</strong> — bilans, bulletins de paie, actes.</li>
+            <li style="color:var(--ink)"><strong style="color:var(--ink)">Suivre vos dossiers</strong> — savoir où en est chaque échéance.</li>
+          </ul>
+          <p style="margin-top:22px;color:var(--muted)">Vos échanges sont chiffrés et chaque accès est tracé : seul vous et votre référent voyez vos documents.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__top">
+      <div>
+        <a class="brand" href="#top">FIDU<b>CIS</b></a>
+        <p>Expertise comptable, conseil juridique et RH pour les entreprises du Sud-Ouest.</p>
+      </div>
+      <div>
+        <h4>Cabinet</h4>
+        <a href="#metiers">Nos métiers</a>
+        <a href="#approche">Notre approche</a>
+        <a href="#implantations">Implantations</a>
+      </div>
+      <div>
+        <h4>Accès</h4>
+        <a href="#espace-client">Espace client</a>
+        <a href="#rendez-vous">Prendre rendez-vous</a>
+        <a href="mailto:contact@fiducis.fr">contact@fiducis.fr</a>
+      </div>
+    </div>
+    <div class="footer__legal">
+      <span>© 2026 FIDUCIS — Bordeaux · La Rochelle · Bayonne</span>
+      <span>Mentions légales · Confidentialité</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    document.querySelectorAll('.section__head,.pillar,.site-card,.ledger,.approach__item,.form,.aside').forEach(function(el){el.classList.add('reveal');});
+    var io=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:0.12});
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  }
+  document.querySelectorAll('#menu a').forEach(function(a){a.addEventListener('click',function(){document.getElementById('menu').classList.remove('open');});});
+</script>
+</body>
+</html>
