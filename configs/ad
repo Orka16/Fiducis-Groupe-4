@@ -1,1 +1,27 @@
+# GPO — Audit des accès aux fichiers (serveur de fichiers AD)
+
+Objectif : tracer les accès aux dossiers clients sensibles (exigence CNIL).
+
+## 1. Stratégie d'audit avancée (GPO liée à l'OU des serveurs de fichiers)
+Configuration ordinateur → Stratégies → Paramètres Windows → Paramètres de sécurité
+→ Configuration avancée de la stratégie d'audit → Stratégies d'audit
+  • Accès aux objets → **Auditer le système de fichiers** : Réussite + Échec
+  • Accès aux objets → Auditer le partage de fichiers détaillé : Réussite + Échec
+
+## 2. SACL sur les dossiers sensibles
+Sur \\SRV-FICHIERS\Clients (et Paie, Juridique) :
+  Propriétés → Sécurité → Avancé → Audit → Ajouter
+    Principal : Utilisateurs authentifiés
+    Type : Réussite
+    Autorisations : Lecture, Écriture, Suppression, Modification des autorisations
+
+## 3. Exploitation
+Observateur d'évènements → Journaux Windows → Sécurité
+  • 4663 : tentative d'accès à un objet
+  • 4670 : modification des autorisations
+  • 4656 / 4658 : ouverture / fermeture de handle
+
+## 4. Centralisation
+Abonnement aux évènements (Windows Event Forwarding) ou export rsyslog
+vers le collecteur central. Rétention : 12 mois (évènements de sécurité).
 
