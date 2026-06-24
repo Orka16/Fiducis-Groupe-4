@@ -1,1 +1,13 @@
+# /etc/prometheus/alert-rules.yml  —  règle "serveur down"
+groups:
+  - name: disponibilite
+    rules:
+      - alert: ServeurDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critique
+        annotations:
+          summary: "Serveur indisponible : {{ $labels.instance }}"
+          description: "{{ $labels.instance }} ne répond plus depuis plus d'une minute."
 
