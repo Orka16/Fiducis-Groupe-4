@@ -1,1 +1,14 @@
+# Extrait /etc/prometheus/prometheus.yml — cibles supervisées
+# (node_exporter sur les serveurs Linux, windows_exporter sur les serveurs Windows)
+scrape_configs:
+  - job_name: serveurs
+    static_configs:
+      - targets:
+          - 10.10.0.10:9100   # SRV-AD
+          - 10.10.0.20:9100   # SRV-FILES
+          - 10.10.0.30:9100   # SRV-VEEAM
+          - 10.10.0.40:9100   # SRV-SAGE
+          - 10.10.0.60:9100   # SRV-WEB
+          - 10.10.0.254:9100  # GW-BDX
+          - 10.20.0.10:9100   # SRV-DC2 (La Rochelle)
 
