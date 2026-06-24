@@ -1,3 +1,0 @@
-# /etc/openvpn/ccd/larochelle  (sur le hub)
-ifconfig-push 10.99.0.2 255.255.255.0
-iroute 10.20.0.0 255.255.255.0
