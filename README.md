@@ -232,13 +232,13 @@ flowchart TB
 
 | VM | OS | vCPU | RAM | Disque | Réseaux (NIC1 / NIC2 / NIC3) |
 |---|---|---|---|---|---|
-| `GW-BDX` | Debian 12 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-bdx` / Internal `dmz-bdx` |
-| `GW-LR` | Debian 12 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-lr` |
-| `GW-BAY` | Debian 12 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-bay` |
+| `GW-BDX` | Unbuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-bdx` / Internal `dmz-bdx` |
+| `GW-LR` | Unbuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-lr` |
+| `GW-BAY` | Unbuntu 24.04 | 1 | 512 Mo | 8 Go | NAT `inet-sim` / Internal `lan-bay` |
 | `SRV-AD` | Windows Server 2022 | 2 | 2048 Mo | 40 Go | Internal `lan-bdx` |
-| `SRV-NEXTCLOUD` | Debian 12 | 2 | 2048 Mo | 30 Go | Internal `lan-bdx` |
+| `SRV-NEXTCLOUD` | Unbuntu 24.04 | 2 | 2048 Mo | 30 Go | Internal `lan-bdx` |
 | `SRV-VEEAM` | Windows Server 2022 | 2 | 4096 Mo | 60 Go | Internal `lan-bdx` |
-| `SRV-WEB` | Debian 12 | 1 | 512 Mo | 10 Go | Internal `dmz-bdx` |
+| `SRV-WEB` | Unbuntu 24.04 | 1 | 512 Mo | 10 Go | Internal `dmz-bdx` |
 | `SRV-SAGE` | Windows Server 2022 | 2 | 2048 Mo | 40 Go | Internal `lan-bdx` |
 | `SRV-DC2` | Windows Server 2022 (Core) | 2 | 2048 Mo | 40 Go | Internal `lan-lr` |
 | `CLIENT-LR` | Windows 10/11 | 2 | 2048 Mo | 40 Go | Internal `lan-lr` |
