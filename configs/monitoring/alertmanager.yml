@@ -1,1 +1,21 @@
+# /etc/alertmanager/alertmanager.yml  —  SRV-SUPERVISION
+# Envoi d'un mail dès qu'une alerte est déclenchée (ex. serveur down).
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: equipe-it
+  group_by: ['alertname', 'instance']
+  group_wait: 30s
+  repeat_interval: 1h
+
+receivers:
+  - name: equipe-it
+    email_configs:
+      - to: alertes@fiducis.fr
+        from: supervision@fiducis.fr
+        smarthost: smtp.fiducis.fr:587
+        auth_username: supervision@fiducis.fr
+        auth_password: "<mot_de_passe_smtp>"
+        send_resolved: true
 
