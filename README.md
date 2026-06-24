@@ -222,5 +222,6 @@ La traçabilité des accès aux fichiers clients s'appuie sur l'audit d'accès a
 - `configs/monitoring/` : stack Docker Prometheus + Grafana + node-exporter (vos fichiers réels) et extension alertes mail
 - `Sauvegarde azure/` : provisionnement Azure Blob Storage pour la sauvegarde du System State AD (code réel, validé en local, non encore appliqué sur Azure) + 
 - `configs/Nginx/` : le site FIDUCIS (un seul fichier HTML autonome)
+- `web/site/` : le site FIDUCIS (un seul fichier HTML autonome)
 
 Les certificats, clés, secrets et états Terraform (`*.tfstate`, `terraform.tfvars`) ne sont pas versionnés (voir `.gitignore`). Le fichier de verrouillage `.terraform.lock.hcl` est conservé pour figer les versions de providers.
